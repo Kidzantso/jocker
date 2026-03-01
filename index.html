@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Widget</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- TOOL SCREEN -->
+  <div class="screen" id="screen">
+    <button class="back-btn" id="backBtn">← Back</button>
+    <div class="screen-content" id="screenContent"></div>
+  </div>
+
+  <!-- RADIAL MENU -->
+  <div class="menu" id="menu">
+    <div class="icon" data-tool="QR Reader">📷</div>
+    <div class="icon" data-tool="QR Maker">📝</div>
+    <div class="icon" data-tool="Translator">🌐</div>
+    <div class="icon" data-tool="Tasks">✅</div>
+    <div class="icon" data-tool="Keyboard">⌨️</div>
+    <div class="icon" data-tool="Timer">⏱️</div>
+  </div>
+
+  <!-- WIDGET -->
+  <div class="widget" id="widget">⚡</div>
+
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
