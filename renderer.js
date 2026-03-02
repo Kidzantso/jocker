@@ -1,33 +1,69 @@
 const widget = document.getElementById('widget');
 const menu = document.getElementById('menu');
-const screen = document.getElementById('screen');
+const screenEl = document.getElementById('screen');
 const screenContent = document.getElementById('screenContent');
 const backBtn = document.getElementById('backBtn');
 
+// Toggle menu
 widget.addEventListener('click', () => {
+  if (widget.classList.contains('hidden')) {
+    widget.classList.remove('hidden');
+    return;
+  }
+
   menu.classList.toggle('show');
 });
 
+
+// Auto-close when clicking outside
+document.addEventListener('click', (e) => {
+  if (!widget.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.remove('show');
+  }
+});
+
+// Tool selection
 document.querySelectorAll('.icon').forEach(icon => {
   icon.addEventListener('click', () => {
     const tool = icon.dataset.tool;
 
-    // Hide widget + menu
     widget.style.display = 'none';
     menu.classList.remove('show');
+    screenEl.classList.add('show');
 
-    // Show screen
-    screen.classList.add('show');
+    const fileName = tool.toLowerCase().replace(/\s+/g, '') + ".html";
 
-    // Inject dynamic content
-    screenContent.innerHTML = `
-      <h2>${tool}</h2>
-      <p>This is the ${tool} screen.</p>
-    `;
+    // Load tool inside iframe
+    const iframe = document.createElement("iframe");
+    iframe.src = `tools/${fileName}`;
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+
+    // Clear previous content
+    screenContent.innerHTML = "";
+    screenContent.appendChild(iframe);
   });
 });
 
+// Back button
 backBtn.addEventListener('click', () => {
-  screen.classList.remove('show');
+  screenEl.classList.remove('show');
   widget.style.display = 'flex';
 });
+
+// Magnetize to right edge after inactivity
+let hideTimeout;
+function scheduleHide() {
+  clearTimeout(hideTimeout);
+  hideTimeout = setTimeout(() => {
+    // Hide icons if menu is open but no tool chosen
+    menu.classList.remove('show');
+    // Magnetize widget
+    widget.classList.add('hidden');
+  }, 5000); // 5s idle then hide
+}
+scheduleHide();
+
+document.addEventListener('mousemove', scheduleHide);
+document.addEventListener('click', scheduleHide);

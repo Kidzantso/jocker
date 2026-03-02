@@ -5,10 +5,10 @@ function createWidget() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   const win = new BrowserWindow({
-    width: 300,
-    height: 300,
-    x: width - 320,
-    y: height - 320,
+    width: 520,
+    height: 520,
+    x: width - 540,   // bottom-right start
+    y: height - 540,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -19,7 +19,6 @@ function createWidget() {
       nodeIntegration: false
     }
   });
-
   win.loadFile('index.html');
 }
 

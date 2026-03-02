@@ -14,15 +14,11 @@ html, body {
   height: 100%;
 }
 
-/* Smaller bottom-right widget */
+/* Widget bottom-right */
 .widget {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  bottom: 20px;
-  right: 20px;
-
+  bottom: 40px;
+  right: 40px;
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -35,21 +31,27 @@ html, body {
   cursor: pointer;
   box-shadow: 0 0 20px rgba(0,0,0,0.6);
   z-index: 10;
+  transition: all 0.4s ease; /* smooth slide */
 }
 
-/* Radial Menu */
+/* Hidden (magnetized) state: half off-screen */
+.widget.hidden {
+  right: -35px; /* half hidden */
+}
+
+/* Menu as a vertical column above the widget */
 .menu {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 220px;
-  height: 220px;
-  transform: translate(-50%, -50%);
+  bottom: 120px;   /* place directly above widget */
+  right: 40px;     /* align horizontally with widget */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center icons horizontally */
+  gap: 10px;       /* spacing between icons */
   pointer-events: none;
 }
 
 .icon {
-  position: absolute;
   width: 45px;
   height: 45px;
   border-radius: 50%;
@@ -70,38 +72,50 @@ html, body {
   transform: scale(1);
 }
 
-/* Position icons in circle */
-.menu .icon:nth-child(1) { top: 0%; left: 50%; transform: translate(-50%, 0); }
-.menu .icon:nth-child(2) { top: 25%; left: 85%; transform: translate(-50%, -50%); }
-.menu .icon:nth-child(3) { top: 75%; left: 85%; transform: translate(-50%, -50%); }
-.menu .icon:nth-child(4) { top: 100%; left: 50%; transform: translate(-50%, -100%); }
-.menu .icon:nth-child(5) { top: 75%; left: 15%; transform: translate(-50%, -50%); }
-.menu .icon:nth-child(6) { top: 25%; left: 15%; transform: translate(-50%, -50%); }
+
 
 .icon:hover {
   background: #61dafb;
   transform: scale(1.2);
 }
 
-/* TOOL SCREEN */
+/* Tool Screen */
 .screen {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 260px;
-  height: 260px;
+  width: 90%;
+  height: 90%;
+  max-width: 600px;
+  max-height: 600px;
   background: rgba(40,44,52,0.95);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 15px;
+  padding: 20px;
   display: none;
   flex-direction: column;
   color: white;
+  box-sizing: border-box;
+  overflow: hidden;   /* ✅ no scrollbars */
 }
+
+.screen-content {
+  margin-top: 15px;
+  flex: 1;
+  overflow: hidden;   /* ✅ no scrollbars */
+}
+
 
 .screen.show {
   display: flex;
+  animation: fadeIn 0.3s ease; /* smooth appearance */
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 
 .back-btn {
   background: none;
@@ -111,9 +125,55 @@ html, body {
   cursor: pointer;
   align-self: flex-start;
 }
+.tool-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  box-sizing: border-box;
+}
 
-.screen-content {
-  margin-top: 15px;
-  flex: 1;
-  overflow: auto;
+.tool-container textarea {
+  flex: 1;                /* ✅ textarea grows to fill space */
+  width: 100%;
+  resize: none;           /* no manual resize */
+  font-size: 14px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+}
+
+.tool-container button {
+  align-self: flex-start; /* keep buttons left aligned */
+  background: #61dafb;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;      /* ✅ smaller buttons */
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.tool-container button:hover {
+  background: #21a1f1;
+}
+
+.file-btn {
+  display: inline-block;
+  background: #61dafb;
+  color: #000;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.file-btn:hover {
+  background: #21a1f1;
 }

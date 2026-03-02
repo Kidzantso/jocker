@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Keyboard Switch</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #61dafb;
+      color: #000;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .notification.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+<div class="tool-container">
+  <h2>Keyboard Switch</h2>
+  <p>Paste or type text below, then press Convert:</p>
+  <textarea id="inputText" rows="6"></textarea>
+  <button id="convertBtn">Convert</button>
+  <h3>Converted Text:</h3>
+  <div id="outputText" style="background:#222; color:#fff; padding:10px; border-radius:5px; min-height:50px;"></div>
+  <button id="copyBtn">Copy Converted Text</button>
+</div>
+
+<div id="notification" class="notification">Copied to clipboard!</div>
+
+<script>
+  const mapEnToAr = {
+    'a':'ش','b':'لا','c':'ؤ','d':'ي','e':'ث','f':'ب','g':'ل','h':'ا','i':'ه','j':'ت',
+    'k':'ن','l':'م','m':'ة','n':'ى','o':'خ','p':'ح','q':'ض','r':'ق','s':'س','t':'ف',
+    'u':'ع','v':'ر','w':'ص','x':'ء','y':'غ','z':'ئ'
+  };
+
+  const mapArToEn = {};
+  for (const [en, ar] of Object.entries(mapEnToAr)) {
+    mapArToEn[ar] = en;
+  }
+
+  function convertText() {
+    const input = document.getElementById('inputText').value;
+    let output = '';
+
+    const isEnglish = /[A-Za-z]/.test(input);
+
+    if (isEnglish) {
+      for (const ch of input) {
+        output += mapEnToAr[ch.toLowerCase()] || ch;
+      }
+    } else {
+      for (const ch of input) {
+        output += mapArToEn[ch] || ch;
+      }
+    }
+
+    document.getElementById('outputText').textContent = output || "(no mapping found)";
+  }
+
+  document.getElementById('convertBtn').addEventListener('click', convertText);
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const text = document.getElementById('outputText').textContent;
+    if (text.trim()) {
+      navigator.clipboard.writeText(text).then(() => {
+        const notif = document.getElementById('notification');
+        notif.classList.add('show');
+        setTimeout(() => notif.classList.remove('show'), 2000);
+      });
+    }
+  });
+</script>
+</body>
+</html>
