@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>QR Maker</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tool-container {
+      overflow-y: auto;   /* ✅ only this screen scrolls */
+    }
+
+    h2, p, h3 {
+      margin: 0;          /* ✅ remove big spaces */
+      font-size: 16px;    /* ✅ smaller text */
+    }
+
+    #qrInput {
+      width: 100%;
+      min-height: 60px;   /* ✅ narrower textarea */
+      font-size: 13px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+    }
+
+    #generateBtn {
+      align-self: flex-start;
+      background: #61dafb;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #generateBtn:hover {
+      background: #21a1f1;
+    }
+
+    #qrCanvas {
+      max-width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .btn-group button {
+      background: #61dafb;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .btn-group button:hover {
+      background: #21a1f1;
+    }
+
+  </style>
+</head>
+<body>
+<div class="tool-container">
+  <h2>QR Maker</h2>
+  <p>Enter text or a link to generate a QR code:</p>
+  <textarea id="qrInput" placeholder="Type or paste text/link here"></textarea>
+  <button id="generateBtn">Generate QR Code</button>
+
+  <canvas id="qrCanvas"></canvas>
+
+  <div class="btn-group">
+    <button id="copyBtn">Copy QR Image</button>
+    <button id="downloadBtn">Download PNG</button>
+  </div>
+</div>
+
+<div id="notification" class="notification">Copied to clipboard!</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  const qrCanvas = document.getElementById('qrCanvas');
+  const notif = document.getElementById('notification');
+
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    const text = document.getElementById('qrInput').value.trim();
+    if (!text) return;
+    QRCode.toCanvas(qrCanvas, text, { width: 180 }, function (error) {
+      if (error) console.error(error);
+    });
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    try {
+      const blob = await new Promise(resolve => qrCanvas.toBlob(resolve));
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
+      notif.classList.add('show');
+      setTimeout(() => notif.classList.remove('show'), 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'qrcode.png';
+    link.href = qrCanvas.toDataURL('image/png');
+    link.click();
+  });
+</script>
+</body>
+</html>

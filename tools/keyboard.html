@@ -4,25 +4,6 @@
   <meta charset="UTF-8">
   <title>Keyboard Switch</title>
   <link rel="stylesheet" href="../assets/style.css">
-  <style>
-    .notification {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #61dafb;
-      color: #000;
-      padding: 10px 15px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .notification.show {
-      opacity: 1;
-    }
-  </style>
 </head>
 <body>
 <div class="tool-container">
@@ -41,7 +22,8 @@
   const mapEnToAr = {
     'a':'ش','b':'لا','c':'ؤ','d':'ي','e':'ث','f':'ب','g':'ل','h':'ا','i':'ه','j':'ت',
     'k':'ن','l':'م','m':'ة','n':'ى','o':'خ','p':'ح','q':'ض','r':'ق','s':'س','t':'ف',
-    'u':'ع','v':'ر','w':'ص','x':'ء','y':'غ','z':'ئ'
+    'u':'ع','v':'ر','w':'ص','x':'ء','y':'غ','z':'ئ', '`':'ذ',']':'د','[':'ج',';':'ك',
+    "'":'ط',',':'و','.':'ز','/':'ظ'
   };
 
   const mapArToEn = {};
