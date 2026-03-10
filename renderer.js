@@ -45,6 +45,15 @@ document.querySelectorAll('.icon').forEach(icon => {
     screenContent.appendChild(iframe);
   });
 });
+function showWidgetBubble(message) {
+  const bubble = document.getElementById('widgetBubble');
+  bubble.textContent = message;
+  bubble.classList.add('show');
+  setTimeout(() => {
+    bubble.classList.remove('show');
+  }, 4000);
+}
+window.showWidgetBubble = showWidgetBubble;
 
 // Back button
 backBtn.addEventListener('click', () => {

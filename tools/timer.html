@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tool-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      box-sizing: border-box;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .options {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .options button {
+      background: #61dafb;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .options button:hover {
+      background: #21a1f1;
+    }
+
+    #phase {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #display {
+      font-size: 36px;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-group button {
+      background: #61dafb;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .btn-group button:hover {
+      background: #21a1f1;
+    }
+
+    .work-phase {
+      color: #61dafb;
+    }
+    .rest-phase {
+      color: #f54291;
+    }
+  </style>
+</head>
+<body>
+<div class="tool-container">
+  <h2>Pomodoro Timer</h2>
+  <p>Select a work duration:</p>
+
+  <div class="options">
+    <button data-work="20" data-rest="2.5">20 min</button>
+    <button data-work="25" data-rest="5">25 min</button>
+    <button data-work="30" data-rest="10">30 min</button>
+  </div>
+
+  <div id="phase" class="work-phase">Work</div>
+  <div id="display">00:00</div>
+
+  <div class="btn-group">
+    <button id="startBtn">Start</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<audio id="alarm" src="../assets/alarm.mp3" preload="auto"></audio>
+
+<script>
+  let timerInterval;
+  let remainingSeconds = 0;
+  let workDuration = 0;
+  let restDuration = 0;
+  let cycleCount = 0;
+  let isWorkPhase = true;
+
+  function updateDisplay() {
+    const mins = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+    const secs = String(remainingSeconds % 60).padStart(2, '0');
+    document.getElementById('display').textContent = `${mins}:${secs}`;
+    document.getElementById('phase').textContent = isWorkPhase ? "Work" : "Rest";
+    document.getElementById('phase').className = isWorkPhase ? "work-phase" : "rest-phase";
+
+    // Save state
+    localStorage.setItem("pomodoroState", JSON.stringify({
+      remainingSeconds, workDuration, restDuration, cycleCount, isWorkPhase
+    }));
+  }
+
+  function startTimer() {
+    if (!timerInterval && remainingSeconds > 0) {
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        updateDisplay();
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          document.getElementById('alarm').play();
+
+          if (isWorkPhase) {
+            cycleCount++;
+            let restTime = restDuration * 60;
+            if (cycleCount % 3 === 0) restTime *= 3;
+            remainingSeconds = restTime;
+            isWorkPhase = false;
+            // ✅ Show bubble outside iframe
+            if (parent.showWidgetBubble) parent.showWidgetBubble("Take rest");
+          } else {
+            remainingSeconds = workDuration * 60;
+            isWorkPhase = true;
+            if (parent.showWidgetBubble) parent.showWidgetBubble("It is work time");
+          }
+          updateDisplay();
+          startTimer();
+        }
+      }, 1000);
+    }
+  }
+
+  document.querySelectorAll('.options button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      workDuration = parseFloat(btn.dataset.work);
+      restDuration = parseFloat(btn.dataset.rest);
+      cycleCount = 0;
+      isWorkPhase = true;
+      remainingSeconds = workDuration * 60;
+      updateDisplay();
+    });
+  });
+
+  document.getElementById('startBtn').addEventListener('click', () => startTimer());
+  document.getElementById('pauseBtn').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    remainingSeconds = workDuration * 60;
+    isWorkPhase = true;
+    cycleCount = 0;
+    updateDisplay();
+  });
+
+  // Restore state if exists
+  const savedState = localStorage.getItem("pomodoroState");
+  if (savedState) {
+    const state = JSON.parse(savedState);
+    remainingSeconds = state.remainingSeconds;
+    workDuration = state.workDuration;
+    restDuration = state.restDuration;
+    cycleCount = state.cycleCount;
+    isWorkPhase = state.isWorkPhase;
+    updateDisplay();
+    if (remainingSeconds > 0) startTimer();
+  } else {
+    updateDisplay();
+  }
+</script>
+</body>
+</html>
