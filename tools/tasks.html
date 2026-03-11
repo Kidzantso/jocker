@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tasks</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tool-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .task-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .task-input input {
+      flex: 1;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+    }
+
+    .task-input select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+    }
+
+    .task-input button {
+      background: #61dafb;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .task-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+
+    .task {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #222;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .task span {
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    .priority-red { border-left: 6px solid red; }
+    .priority-yellow { border-left: 6px solid yellow; }
+    .priority-green { border-left: 6px solid green; }
+
+    .task button {
+      margin-left: 6px;
+      background: #61dafb;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #61dafb;
+      color: #000;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: auto;
+      z-index: 9999;
+    }
+    .notification.show {
+      opacity: 1;
+    }
+    .notification button {
+      margin-left: 10px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="tool-container">
+  <h2>Tasks</h2>
+
+  <div class="task-input">
+    <input type="text" id="taskText" placeholder="Enter task...">
+    <select id="priority">
+      <option value="red">High</option>
+      <option value="yellow">Medium</option>
+      <option value="green">Low</option>
+    </select>
+    <button id="addBtn">Add</button>
+  </div>
+
+  <div class="controls">
+    <button id="clearAllBtn">Clear All</button>
+    <button id="clearDoneBtn">Clear Done</button>
+  </div>
+
+  <div class="task-list" id="taskList"></div>
+</div>
+
+<div class="notification" id="notification">
+  Task marked done
+  <button id="undoBtn">Undo</button>
+</div>
+
+<script>
+  const taskList = document.getElementById('taskList');
+  const notification = document.getElementById('notification');
+  let lastDoneTask = null;
+
+  // Load tasks from localStorage
+  function loadTasks() {
+    const saved = localStorage.getItem("tasks");
+    if (saved) {
+      const tasks = JSON.parse(saved);
+      tasks.forEach(t => createTask(t.text, t.priority, t.done));
+    }
+  }
+
+  // Save tasks to localStorage
+  function saveTasks() {
+    const tasks = [...taskList.children].map(task => ({
+      text: task.querySelector('span').textContent,
+      priority: task.classList.contains("priority-red") ? "red" :
+                task.classList.contains("priority-yellow") ? "yellow" : "green",
+      done: task.style.textDecoration === "line-through"
+    }));
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }
+
+  function createTask(text, priority, done=false) {
+    const task = document.createElement('div');
+    task.className = `task priority-${priority}`;
+    task.innerHTML = `
+      <span>${text}</span>
+      <button class="doneBtn">${done ? "Undone" : "Done"}</button>
+    `;
+
+    if (done) task.style.textDecoration = "line-through";
+
+    task.querySelector('.doneBtn').addEventListener('click', () => {
+      if (task.style.textDecoration === "line-through") {
+        task.style.textDecoration = "none";
+        task.querySelector('.doneBtn').textContent = "Done";
+      } else {
+        task.style.textDecoration = "line-through";
+        task.querySelector('.doneBtn').textContent = "Undone";
+        lastDoneTask = task;
+        showNotification();
+      }
+      saveTasks();
+    });
+
+    taskList.appendChild(task);
+    saveTasks();
+  }
+
+  function showNotification() {
+    notification.classList.add('show');
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, 4000);
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const text = document.getElementById('taskText').value.trim();
+    const priority = document.getElementById('priority').value;
+    if (text) {
+      createTask(text, priority);
+      document.getElementById('taskText').value = "";
+    }
+  });
+
+  document.getElementById('undoBtn').addEventListener('click', () => {
+    if (lastDoneTask) {
+      lastDoneTask.style.textDecoration = "none";
+      lastDoneTask.querySelector('.doneBtn').textContent = "Done";
+      lastDoneTask = null;
+      saveTasks();
+    }
+    notification.classList.remove('show');
+  });
+
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    taskList.innerHTML = "";
+    saveTasks();
+  });
+
+  document.getElementById('clearDoneBtn').addEventListener('click', () => {
+    [...taskList.children].forEach(task => {
+      if (task.style.textDecoration === "line-through") {
+        task.remove();
+      }
+    });
+    saveTasks();
+  });
+
+  loadTasks();
+</script>
+</body>
+</html>
