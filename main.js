@@ -43,8 +43,13 @@ function createWidget() {
   applyMode('collapsed');
 }
 
-app.whenReady().then(createWidget);
+app.whenReady().then(() => {
+  createWidget();
+  app.setLoginItemSettings({ openAtLogin: true });
+});
 
 ipcMain.on('widget:setMode', (_evt, mode) => {
   applyMode(String(mode || 'collapsed'));
 });
+ipcMain.on('toggle-menu', (_evt, state) => applyMode(state ? 'menu' : 'collapsed'));
+ipcMain.on('open-tool', (_evt, tool) => applyMode('screen'));
