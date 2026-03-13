@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ultimate Notes</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tool-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    input, select, button {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #111;
+      color: #ddd; /* lighter text */
+      font-size: 14px;
+    }
+
+    button {
+      background: #61dafb;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #21a1f1;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #222;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .note-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .note-item span {
+      flex: 1;
+      margin-right: 10px;
+      color: #eee; /* lighter text */
+    }
+
+    img.note-preview {
+      max-width: 120px;
+      border-radius: 6px;
+    }
+
+    audio {
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+<div class="tool-container">
+  <div id="albums-screen">
+    <h2>Ultimate Notes</h2>
+    <form id="album-form">
+      <input type="text" id="album-name" placeholder="Album name" required>
+      <button type="submit">Add Album</button>
+    </form>
+    <h3>Albums</h3>
+    <ul id="album-list"></ul>
+  </div>
+
+  <div id="notes-screen" style="display:none;">
+    <h2 id="selected-album-title"></h2>
+    <form id="note-form">
+      <select id="note-type" required>
+        <option value="" disabled selected>Select note type</option>
+        <option value="text">Text</option>
+        <option value="photo">Photo</option>
+        <option value="voice">Voice Note</option>
+      </select>
+      <div id="note-inputs"></div>
+      <button type="submit">Add Note</button>
+    </form>
+    <ul id="note-list"></ul>
+    <button id="back-to-albums">Back to Albums</button>
+  </div>
+</div>
+
+<script>
+  let albums = JSON.parse(localStorage.getItem("albums")) || {};
+  let currentAlbum = null;
+  let recordedBlobUrl = null; // store recording until user confirms
+
+  const albumForm = document.getElementById("album-form");
+  const albumList = document.getElementById("album-list");
+  const notesScreen = document.getElementById("notes-screen");
+  const albumsScreen = document.getElementById("albums-screen");
+  const selectedAlbumTitle = document.getElementById("selected-album-title");
+  const noteForm = document.getElementById("note-form");
+  const noteType = document.getElementById("note-type");
+  const noteInputs = document.getElementById("note-inputs");
+  const noteList = document.getElementById("note-list");
+  const backBtn = document.getElementById("back-to-albums");
+
+  function saveAlbums() {
+    localStorage.setItem("albums", JSON.stringify(albums));
+  }
+
+  function renderAlbums() {
+    albumList.innerHTML = "";
+    Object.keys(albums).forEach(name => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span style="cursor:pointer">${name}</span>
+        <button onclick="deleteAlbum('${name}')">Delete</button>
+      `;
+      li.querySelector("span").addEventListener("click", () => openAlbum(name));
+      albumList.appendChild(li);
+    });
+  }
+
+  function deleteAlbum(name) {
+    delete albums[name];
+    saveAlbums();
+    renderAlbums();
+  }
+
+  function openAlbum(name) {
+    currentAlbum = name;
+    selectedAlbumTitle.textContent = name;
+    albumsScreen.style.display = "none";
+    notesScreen.style.display = "block";
+    renderNotes();
+  }
+
+  function renderNotes() {
+    noteList.innerHTML = "";
+    albums[currentAlbum].forEach((note, idx) => {
+      const li = document.createElement("li");
+      li.className = "note-item";
+      let content = "";
+      if (note.type === "text") {
+        content = `<span>${note.value}</span>`;
+      }
+      if (note.type === "photo") {
+        content = `<img src="${note.value}" class="note-preview">`;
+      }
+      if (note.type === "voice") {
+        content = `<audio controls src="${note.value}"></audio>`;
+      }
+      li.innerHTML = `${content} <button onclick="deleteNote(${idx})">Delete</button>`;
+      noteList.appendChild(li);
+    });
+  }
+
+  function deleteNote(idx) {
+    albums[currentAlbum].splice(idx, 1);
+    saveAlbums();
+    renderNotes();
+  }
+
+  albumForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const name = document.getElementById("album-name").value.trim();
+    if (name && !albums[name]) {
+      albums[name] = [];
+      saveAlbums();
+      renderAlbums();
+      document.getElementById("album-name").value = "";
+    }
+  });
+
+  noteType.addEventListener("change", () => {
+    noteInputs.innerHTML = "";
+    recordedBlobUrl = null;
+    if (noteType.value === "text") {
+      noteInputs.innerHTML = `<input type="text" id="note-text" placeholder="Enter text note" required>`;
+    } else if (noteType.value === "photo") {
+      // allow capture from camera or browse
+      noteInputs.innerHTML = `<input type="file" id="note-photo" accept="image/*" capture="environment" required>`;
+    } else if (noteType.value === "voice") {
+      noteInputs.innerHTML = `
+        <input type="file" id="note-voice" accept="audio/*">
+        <button type="button" id="recordBtn">Record</button>
+        <div id="recordPreview"></div>
+      `;
+      setupRecorder();
+    }
+  });
+
+  function setupRecorder() {
+    const recordBtn = document.getElementById("recordBtn");
+    const preview = document.getElementById("recordPreview");
+    let mediaRecorder;
+    let chunks = [];
+
+    recordBtn.addEventListener("click", async () => {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: "audio/webm" });
+          chunks = [];
+          recordedBlobUrl = URL.createObjectURL(blob);
+          preview.innerHTML = `<audio controls src="${recordedBlobUrl}"></audio>`;
+        };
+        mediaRecorder.start();
+        recordBtn.textContent = "Stop Recording";
+      } else {
+        mediaRecorder.stop();
+        recordBtn.textContent = "Record";
+      }
+    });
+  }
+  document.getElementById("note-form").addEventListener("submit", e => {
+    e.preventDefault();
+    let note = { type: noteType.value, value: "" };
+    if (note.type === "text") {
+      note.value = document.getElementById("note-text").value;
+    } else if (note.type === "photo") {
+      const file = document.getElementById("note-photo").files[0];
+      if (file) {
+        note.value = URL.createObjectURL(file);
+      }
+    } else if (note.type === "voice") {
+      const file = document.getElementById("note-voice").files[0];
+      if (file) {
+        note.value = URL.createObjectURL(file);
+      } else if (recordedBlobUrl) {
+        note.value = recordedBlobUrl;
+      }
+    }
+    if (note.value) {
+      albums[currentAlbum].push(note);
+      saveAlbums();
+      renderNotes();
+      noteForm.reset();
+      document.getElementById("note-inputs").innerHTML = "";
+      recordedBlobUrl = null;
+    }
+  });
+
+  document.getElementById("back-to-albums").addEventListener("click", () => {
+    document.getElementById("notes-screen").style.display = "none";
+    document.getElementById("albums-screen").style.display = "block";
+    currentAlbum = null;
+  });
+
+  renderAlbums();
+</script>
+</body>
+</html>
